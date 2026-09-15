@@ -1,4 +1,4 @@
-/** 统一的 fetch 封装：拼前缀、JSON 序列化、非 2xx 抛错。 */
+/** 统一的 fetch 封装：拼前缀、JSON 序列化、非成功响应抛错。 */
 const BASE = '/api';
 
 export class ApiError extends Error {
@@ -18,10 +18,23 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   } catch {
     throw new ApiError('网络异常，请稍后重试');
   }
-  if (!res.ok) {
-    throw new ApiError(`请求失败（${res.status}）`);
+
+  let body: unknown = null;
+  try {
+    body = await res.json();
+  } catch {
+    // 非 JSON 响应（如网关错误页），交给状态码处理
   }
-  return (await res.json()) as T;
+
+  if (!res.ok || (body && typeof body === 'object' && (body as { success?: boolean }).success === false)) {
+    const message =
+      body && typeof body === 'object' && typeof (body as { message?: string }).message === 'string'
+        ? ((body as { message: string }).message)
+        : `请求失败（${res.status}）`;
+    throw new ApiError(message);
+  }
+
+  return body as T;
 }
 
 export const http = {

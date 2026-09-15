@@ -13,6 +13,11 @@
       <van-loading size="24px">加载中…</van-loading>
     </div>
 
+    <div v-else-if="loadError" class="growth-panel__error">
+      <van-empty image="error" :description="loadError" />
+      <van-button type="primary" size="small" round @click="load">重试</van-button>
+    </div>
+
     <template v-else>
       <van-empty
         v-if="!records.length"
@@ -47,10 +52,11 @@ import type { GrowthRecord } from '../types';
 import { listGrowthRecords } from '../api/growth';
 import { DEFAULT_RANGE, resolveRange, type RangeSelection } from '../utils/growthRange';
 
-const props = defineProps<{ babyId: number }>();
+const props = defineProps<{ babyId: string }>();
 
 const records = ref<GrowthRecord[]>([]);
 const loading = ref(false);
+const loadError = ref('');
 const everRecorded = ref(false);
 const rangeSelection = ref<RangeSelection>({ ...DEFAULT_RANGE });
 const showRecordPopup = ref(false);
@@ -61,6 +67,7 @@ let requestSeq = 0;
 async function load() {
   const seq = ++requestSeq;
   loading.value = true;
+  loadError.value = '';
   const range = resolveRange(rangeSelection.value);
   try {
     const [data, allData] = await Promise.all([
@@ -72,6 +79,12 @@ async function load() {
     if (seq !== requestSeq) return;
     records.value = data;
     if (allData) everRecorded.value = allData.length > 0;
+  } catch (error) {
+    if (seq === requestSeq) {
+      // 查询失败必须明确提示，不能退化成“还没有记录”的空态
+      records.value = [];
+      loadError.value = error instanceof Error ? error.message : '生长记录加载失败';
+    }
   } finally {
     if (seq === requestSeq) loading.value = false;
   }
@@ -101,5 +114,14 @@ load();
   display: flex;
   justify-content: center;
   padding: 48px 0;
+}
+.growth-panel__error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-bottom: 16px;
+}
+.growth-panel__error :deep(.van-empty__description) {
+  color: #ee0a24;
 }
 </style>

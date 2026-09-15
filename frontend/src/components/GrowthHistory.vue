@@ -24,11 +24,11 @@ import type { GrowthRecord } from '../types';
 
 const props = defineProps<{ records: GrowthRecord[] }>();
 
-/** 最新录入在前；每个日期的第一条（id 最大）为当日最新值。 */
+/** 最新录入在前；每个日期的第一条（id 最大）为当日最新值。ID 为字符串雪花值，按数值语义比较。 */
 const marked = computed(() => {
   const desc = [...props.records].sort((a, b) => {
     if (a.recordedAt !== b.recordedAt) return b.recordedAt.localeCompare(a.recordedAt);
-    return b.id - a.id;
+    return String(b.id).localeCompare(String(a.id), undefined, { numeric: true });
   });
   const seenDates = new Set<string>();
   return desc.map((record) => {

@@ -44,7 +44,7 @@ import type { GrowthRecordInput } from '../types';
 import { saveGrowthRecord } from '../api/growth';
 import { toDateString, todayString } from '../utils/date';
 
-const props = defineProps<{ show: boolean; babyId: number; defaultDate?: string }>();
+const props = defineProps<{ show: boolean; babyId: string; defaultDate?: string }>();
 const emit = defineEmits<{
   'update:show': [value: boolean];
   saved: [record: GrowthRecordInput];

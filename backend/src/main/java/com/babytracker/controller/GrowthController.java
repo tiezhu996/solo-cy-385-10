@@ -15,9 +15,9 @@ public class GrowthController {
 
     @GetMapping
     public List<GrowthRecord> list(
-            @RequestParam(required = false) Long babyId,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end) {
+            @RequestParam(name = "babyId", required = false) Long babyId,
+            @RequestParam(name = "start", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
+            @RequestParam(name = "end", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end) {
         return service.list(babyId, start, end);
     }
 
