@@ -34,6 +34,25 @@ npm install
 npm run dev
 ```
 
+## 测试
+
+后端为 Spring Boot 集成测试（JUnit5 + MockMvc + H2，MySQL 兼容模式），每个用例独立事务、结束自动回滚，可连续重复运行：
+
+```bash
+cd backend
+mvn test
+```
+
+前端为 Vitest 纯逻辑单元测试（曲线聚合、接口响应判别、时间段解析）：
+
+```bash
+cd frontend
+npm install
+npm test
+```
+
+测试覆盖：长雪花宝宝标识以字符串精确回读、按宝宝隔离、日期区间闭区间过滤、同日多条新值入曲线/旧值保留、缺项留空不补点、未建档宝宝返回 200 空数组与参数错误 400 / 服务异常 500 的区分。
+
 ## 技术栈
 
 | 层级 | 技术 |

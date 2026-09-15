@@ -8,6 +8,28 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * 判别接口响应：
+ * - HTTP 非 2xx，或 2xx 但业务体显式 success:false（历史后端曾这样返回）→ 抛错；
+ * - 200 空数组/空对象属于正常数据（正常空态），绝不能当成错误。
+ * 抽成纯函数便于单元测试覆盖“空态 / 服务器错误 / 参数错误”的边界。
+ */
+export function parseApiResponse(status: number, body: unknown): unknown {
+  const isErrorBody =
+    body != null && typeof body === 'object' && (body as { success?: boolean }).success === false;
+
+  if (status < 200 || status >= 300 || isErrorBody) {
+    const message =
+      body != null &&
+      typeof body === 'object' &&
+      typeof (body as { message?: string }).message === 'string'
+        ? (body as { message: string }).message
+        : `请求失败（${status}）`;
+    throw new ApiError(message);
+  }
+  return body;
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   let res: Response;
   try {
@@ -15,7 +37,8 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
       headers: { 'Content-Type': 'application/json' },
       ...options,
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
     throw new ApiError('网络异常，请稍后重试');
   }
 
@@ -26,15 +49,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     // 非 JSON 响应（如网关错误页），交给状态码处理
   }
 
-  if (!res.ok || (body && typeof body === 'object' && (body as { success?: boolean }).success === false)) {
-    const message =
-      body && typeof body === 'object' && typeof (body as { message?: string }).message === 'string'
-        ? ((body as { message: string }).message)
-        : `请求失败（${res.status}）`;
-    throw new ApiError(message);
-  }
-
-  return body as T;
+  return parseApiResponse(res.status, body) as T;
 }
 
 export const http = {
