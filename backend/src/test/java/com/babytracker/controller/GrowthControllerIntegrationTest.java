@@ -53,7 +53,7 @@ class GrowthControllerIntegrationTest extends BaseIntegrationTest {
 
     private JsonNode getJson(String uri) throws Exception {
         MvcResult result = get(uri);
-        return objectMapper.readTree(result.getResponse().getContentAsString());
+        return readJson(result);
     }
 
     @Test
@@ -156,7 +156,7 @@ class GrowthControllerIntegrationTest extends BaseIntegrationTest {
     @DisplayName("规则：未建档宝宝查询返回 200 空数组，属于正常空态而非服务器错误")
     void unknownBabyReturnsEmptyListWith200() throws Exception {
         MvcResult result = get(BASE + "?babyId=999999999999999999");
-        JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
+        JsonNode body = readJson(result);
 
         assertThat(result.getResponse().getStatus())
                 .as("查询不存在的宝宝必须是 200，而不是 500").isEqualTo(200);
@@ -170,7 +170,7 @@ class GrowthControllerIntegrationTest extends BaseIntegrationTest {
         MvcResult badDate = get(BASE + "?start=not-a-date");
         assertThat(badDate.getResponse().getStatus())
                 .as("非法日期必须返回 400，不能伪装成 200 空结果").isEqualTo(400);
-        JsonNode dateError = objectMapper.readTree(badDate.getResponse().getContentAsString());
+        JsonNode dateError = readJson(badDate);
         assertThat(dateError.get("success").asBoolean()).isFalse();
         assertThat(dateError.get("code").asText()).isEqualTo("VALIDATION_FAILED");
 

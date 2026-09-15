@@ -27,19 +27,28 @@ public abstract class BaseIntegrationTest {
 
     /** 以 JSON 发起 POST，返回响应对象。 */
     protected JsonNode postJson(String uri, Object body) throws Exception {
-        String response = mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+        return readJson(post(uri, body));
+    }
+
+    /** 以 JSON 发起 POST 并返回完整结果，便于同时断言状态码与错误体。 */
+    protected MvcResult post(String uri, Object body) throws Exception {
+        return mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
                         .post(uri)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)))
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
-        return objectMapper.readTree(response);
+                .andReturn();
     }
 
     /** 发起 GET 并返回完整结果，便于在断言中同时检查 HTTP 状态码与响应体。 */
     protected MvcResult get(String uri) throws Exception {
         return mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(uri))
                 .andReturn();
+    }
+
+    /**
+     * 按原始字节（UTF-8）解析响应，避免 MockMvc 默认 ISO-8859-1 读取导致中文提示乱码。
+     */
+    protected JsonNode readJson(MvcResult result) throws Exception {
+        return objectMapper.readTree(result.getResponse().getContentAsByteArray());
     }
 }

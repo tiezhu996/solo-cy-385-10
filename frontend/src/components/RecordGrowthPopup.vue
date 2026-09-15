@@ -43,6 +43,7 @@ import { showToast } from 'vant';
 import type { GrowthRecordInput } from '../types';
 import { saveGrowthRecord } from '../api/growth';
 import { toDateString, todayString } from '../utils/date';
+import { toGrowthInput, validateGrowthInput } from '../utils/growthValidation';
 
 const props = defineProps<{ show: boolean; babyId: string; defaultDate?: string }>();
 const emit = defineEmits<{
@@ -91,28 +92,31 @@ function toFiniteNumber(value: string): number | null {
 async function onSubmit() {
   const height = toFiniteNumber(heightCm.value);
   const weight = toFiniteNumber(weightKg.value);
-  if (height == null && weight == null) {
-    showToast('身高和体重至少填写一项');
-    return;
-  }
-  if (!recordedAt.value) {
-    showToast('请选择日期');
-    return;
-  }
-  const input: GrowthRecordInput = {
+  const error = validateGrowthInput({
     babyId: props.babyId,
     recordedAt: recordedAt.value,
     heightCm: height,
     weightKg: weight,
-  };
+  });
+  if (error) {
+    showToast(error);
+    return;
+  }
+  const input: GrowthRecordInput = toGrowthInput({
+    babyId: props.babyId,
+    recordedAt: recordedAt.value,
+    heightCm: height,
+    weightKg: weight,
+  });
   saving.value = true;
   try {
     await saveGrowthRecord(input);
     showToast('已保存');
     emit('saved', input);
     emit('update:show', false);
-  } catch (error) {
-    showToast(error instanceof Error ? error.message : '保存失败');
+  } catch (requestError) {
+    // 后端是写入校验的权威来源（如宝宝未建档），失败时明确提示，不伪装成功
+    showToast(requestError instanceof Error ? requestError.message : '保存失败');
   } finally {
     saving.value = false;
   }
