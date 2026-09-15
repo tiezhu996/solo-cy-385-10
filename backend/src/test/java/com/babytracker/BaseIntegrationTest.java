@@ -39,6 +39,17 @@ public abstract class BaseIntegrationTest {
                 .andReturn();
     }
 
+    /** 以原始字符串作为请求体发起 POST，用于发送空体或损坏的 JSON。 */
+    protected MvcResult postRaw(String uri, String rawBody) throws Exception {
+        var request = org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                .post(uri)
+                .contentType(MediaType.APPLICATION_JSON);
+        if (rawBody != null) {
+            request.content(rawBody);
+        }
+        return mockMvc.perform(request).andReturn();
+    }
+
     /** 发起 GET 并返回完整结果，便于在断言中同时检查 HTTP 状态码与响应体。 */
     protected MvcResult get(String uri) throws Exception {
         return mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(uri))

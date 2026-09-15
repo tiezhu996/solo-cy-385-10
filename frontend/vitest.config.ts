@@ -5,8 +5,9 @@ import vue from '@vitejs/plugin-vue';
 export default defineConfig({
   plugins: [vue()],
   test: {
-    environment: 'node',
-    include: ['src/**/*.spec.ts'],
+    environment: 'happy-dom',
     globals: false,
+    include: ['src/**/*.spec.ts'],
+    setupFiles: ['./src/test/setup.ts'],
   },
 });
